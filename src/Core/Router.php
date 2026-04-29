@@ -9,6 +9,9 @@ class Router {
         '/logout' => ['App\Controller\AuthController', 'logout'],
         '/dashboard' => ['App\Controller\ListController', 'index'],
         '/list/create' => ['App\Controller\ListController', 'create'],
+        '/list/view' => ['App\Controller\ListController', 'view'], // NEU
+        '/item/add' => ['App\Controller\ItemController', 'add'],    // NEU
+        '/item/toggle' => ['App\Controller\ItemController', 'toggle'] // NEU
     ];
 
     public function run() {
