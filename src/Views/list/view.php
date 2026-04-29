@@ -1,94 +1,90 @@
 <?php include __DIR__ . '/../layout/header.php'; ?>
 
-<div class="flex flex-col gap-6" id="shopping-list-container" data-list-id="<?= $list['id'] ?>">
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold"><?= htmlspecialchars($list['name']) ?></h1>
-        <button onclick="document.getElementById('add-item-modal').classList.remove('hidden')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-        </button>
+<div class="flex flex-col gap-6" id="list-app" data-list-id="<?= $list['id'] ?>">
+    <div class="flex justify-between items-center bg-white dark:bg-darkCard p-4 rounded-xl shadow-sm">
+        <div>
+            <h1 class="text-xl font-bold"><?= htmlspecialchars($list['name']) ?></h1>
+            <p class="text-sm text-green-500 font-mono">Gesamt: <?= number_format($totalSum, 2, ',', '.') ?> €</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openModal('deposit-modal')" class="bg-yellow-600 text-white p-2 rounded-lg text-sm">Pfand</button>
+            <button onclick="openModal('add-item-modal')" class="bg-indigo-600 text-white p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"/></svg>
+            </button>
+        </div>
     </div>
 
     <?php foreach ($categories as $catId => $cat): ?>
-        <div class="category-section mb-4" data-category-id="<?= $catId ?>">
-            <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                <?= htmlspecialchars($cat['name']) ?>
-            </h3>
-            <div class="space-y-2">
+        <section class="mb-4">
+            <h3 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-2"><?= htmlspecialchars($cat['name']) ?></h3>
+            <div class="grid gap-2">
                 <?php foreach ($cat['items'] as $item): ?>
-                    <div id="item-<?= $item['id'] ?>" class="flex items-center justify-between p-4 bg-white dark:bg-darkCard rounded-lg shadow-sm border-l-4 <?= $item['is_checked'] ? 'border-green-500 opacity-50' : 'border-indigo-500' ?>">
+                    <div class="flex items-center justify-between p-4 bg-white dark:bg-darkCard rounded-xl shadow-sm border-l-4 <?= $item['is_checked'] ? 'border-green-500 opacity-60' : 'border-indigo-500' ?>">
                         <div class="flex items-center gap-3">
-                            <input type="checkbox" 
-                                   <?= $item['is_checked'] ? 'checked' : '' ?> 
-                                   onchange="toggleItem(<?= $item['id'] ?>)"
-                                   class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                            <span class="<?= $item['is_checked'] ? 'line-through' : '' ?> font-medium">
-                                <?= htmlspecialchars($item['name']) ?> 
-                                <span class="text-sm text-gray-400 ml-2"><?= htmlspecialchars($item['amount']) ?></span>
+                            <input type="checkbox" <?= $item['is_checked'] ? 'checked' : '' ?> 
+                                   onchange="<?= $item['is_checked'] ? "location.href='/item/toggle?id=".$item['id']."'" : "openCalcModal(".$item['id'].", '".$item['name']."')" ?>"
+                                   class="w-6 h-6 rounded-full border-gray-300 text-indigo-600">
+                            <span class="<?= $item['is_checked'] ? 'line-through text-gray-400' : 'font-medium' ?>">
+                                <?= htmlspecialchars($item['name']) ?>
+                                <?php if($item['amount']): ?><span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded ml-2"><?= htmlspecialchars($item['amount']) ?></span><?php endif; ?>
                             </span>
                         </div>
-                        <div class="text-right">
-                            <span class="text-xs text-gray-400"><?= $item['total_price'] > 0 ? number_format($item['total_price'], 2, ',', '.') . ' €' : '' ?></span>
+                        <div class="text-right font-mono text-sm">
+                            <?= $item['total_price'] != 0 ? number_format($item['total_price'], 2, ',', '.') . ' €' : '' ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
-        </div>
+        </section>
     <?php endforeach; ?>
 </div>
 
-<!-- Modal: Produkt hinzufügen -->
-<div id="add-item-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-darkCard w-full max-w-md p-6 rounded-xl shadow-2xl">
-        <h2 class="text-xl font-bold mb-4">Produkt hinzufügen</h2>
-        <form action="/item/add" method="POST" class="space-y-4">
+<!-- Modal: Taschenrechner -->
+<div id="calc-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-darkCard w-full max-w-sm p-6 rounded-2xl shadow-2xl">
+        <h2 id="calc-item-name" class="text-lg font-bold mb-4">Preis eingeben</h2>
+        <form action="/item/update-price" method="POST">
+            <input type="hidden" name="item_id" id="calc-item-id">
             <input type="hidden" name="list_id" value="<?= $list['id'] ?>">
-            <div>
-                <label class="block text-sm mb-1">Produktname</label>
-                <input type="text" name="name" required autofocus class="w-full p-2 rounded border dark:bg-gray-800 dark:border-gray-700">
+            <div class="mb-4">
+                <label class="block text-xs uppercase text-gray-500 mb-1">Preis oder Formel (z.B. 0,39+0,25)</label>
+                <input type="text" name="price_formula" id="calc-input" autofocus class="w-full text-2xl p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 font-mono" placeholder="0,00">
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm mb-1">Menge</label>
-                    <input type="text" name="amount" placeholder="z.B. 2er Pack" class="w-full p-2 rounded border dark:bg-gray-800 dark:border-gray-700">
-                </div>
-                <div>
-                    <label class="block text-sm mb-1">Kategorie</label>
-                    <select name="category_id" class="w-full p-2 rounded border dark:bg-gray-800 dark:border-gray-700">
-                        <?php foreach($allCategories as $c): ?>
-                            <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button type="button" onclick="document.getElementById('add-item-modal').classList.add('hidden')" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Abbrechen</button>
-                <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded font-bold">Speichern</button>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('calc-modal')" class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl">Abbrechen</button>
+                <button type="submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">OK & Abhaken</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Modal: Pfand -->
+<div id="deposit-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-darkCard w-full max-w-sm p-6 rounded-2xl shadow-2xl">
+        <h2 class="text-lg font-bold mb-4">Pfandbon abziehen</h2>
+        <form action="/item/add-deposit" method="POST">
+            <input type="hidden" name="list_id" value="<?= $list['id'] ?>">
+            <input type="text" name="deposit_amount" placeholder="Betrag (z.B. 2,50)" class="w-full text-2xl p-3 rounded-xl border dark:bg-gray-800 dark:border-gray-700 font-mono mb-4">
+            <button type="submit" class="w-full py-3 bg-yellow-600 text-white rounded-xl font-bold">Abrechnen</button>
+        </form>
+    </div>
+</div>
+
 <script>
-// Mercure Echtzeit-Anbindung
-const listId = document.getElementById('shopping-list-container').dataset.listId;
-const eventSource = new EventSource("<?= Config::get('MERCURE_PUBLIC_URL') ?>?topic=" + encodeURIComponent("http://zettelwirtschaft.local/list/" + listId));
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-eventSource.onmessage = event => {
-    const data = JSON.parse(event.data);
-    if (data.action === 'item_toggled' || data.action === 'item_added') {
-        location.reload(); // Einfachste Lösung für konsistente Daten ohne komplexes DOM-JS
-    }
-};
-
-function toggleItem(id) {
-    fetch('/item/toggle?ajax=1&id=' + id)
-        .then(response => response.json())
-        .then(data => {
-            if(!data.success) alert('Fehler beim Speichern');
-        });
+function openCalcModal(id, name) {
+    document.getElementById('calc-item-id').value = id;
+    document.getElementById('calc-item-name').innerText = name;
+    openModal('calc-modal');
+    setTimeout(() => document.getElementById('calc-input').focus(), 100);
 }
+
+// Mercure Integration
+const listId = document.getElementById('list-app').dataset.listId;
+const eventSource = new EventSource("<?= Config::get('MERCURE_PUBLIC_URL') ?>?topic=" + encodeURIComponent("http://zettelwirtschaft.local/list/" + listId));
+eventSource.onmessage = () => location.reload();
 </script>
 
 <?php include __DIR__ . '/../layout/footer.php'; ?>
