@@ -87,4 +87,22 @@ const eventSource = new EventSource("<?= Config::get('MERCURE_PUBLIC_URL') ?>?to
 eventSource.onmessage = () => location.reload();
 </script>
 
+// In der view.php ergänzen:
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    const el = document.getElementById('shopping-list-container');
+    new Sortable(el, {
+        animation: 150,
+        handle: '.category-header', // Wir fügen einen Griff hinzu
+        onEnd: function() {
+            let order = [];
+            document.querySelectorAll('.category-section').forEach((section, index) => {
+                order.push({ id: section.dataset.categoryId, pos: index });
+            });
+            // Hier könnte ein AJAX Call hin, um die Sortierung pro Liste zu speichern
+            console.log("Neue Sortierung:", order);
+        }
+    });
+</script>
+
 <?php include __DIR__ . '/../layout/footer.php'; ?>
