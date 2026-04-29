@@ -1,4 +1,4 @@
-<?php include __DIR__ . '/../../layout/header.php'; ?>
+<?php include __DIR__ . '/../layout/header.php'; ?>
 
 <div class="max-w-md mx-auto bg-white dark:bg-darkCard p-8 rounded-2xl shadow-xl">
     <h1 class="text-2xl font-bold mb-6 text-center">Konto erstellen</h1>
@@ -22,4 +22,4 @@
     </p>
 </div>
 
-<?php include __DIR__ . '/../../layout/footer.php'; ?>
+<?php include __DIR__ . '/../layout/footer.php'; ?>
