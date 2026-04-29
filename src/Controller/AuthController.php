@@ -2,28 +2,28 @@
 namespace App\Controller;
 
 use App\Core\Database;
-use App\Core\Config;
 
 class AuthController {
+    
     public function login() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = trim($_POST['username'] ?? '');
+            $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
 
             $db = Database::getInstance();
-            $stmt = $db->prepare("SELECT id, username, password_hash, role FROM users WHERE username = ?");
+            $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
             $stmt->execute([$username]);
             $user = $stmt->fetch();
 
-            if ($user && password_verify($password, $user['password_hash'])) {
+            if ($user && password_verify($password, $user['password'])) {
+                session_start();
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
-                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 header("Location: /dashboard");
                 exit;
             }
-            $error = "Ungültige Anmeldedaten.";
+            $error = "Ungültige Anmeldedaten";
         }
         include __DIR__ . '/../Views/auth/login.php';
     }
@@ -33,34 +33,43 @@ class AuthController {
             $username = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
 
-            if (strlen($username) < 3 || strlen($password) < 8) {
-                $error = "Nutzername min. 3, Passwort min. 8 Zeichen.";
-            } else {
+            if (!empty($username) && !empty($password)) {
+                $hash = password_hash($password, PASSWORD_DEFAULT);
                 $db = Database::getInstance();
-                $hash = password_hash($password, PASSWORD_ARGON2ID);
+                
+                // Ersten User zum Admin machen, alle anderen sind User
+                $stmt = $db->query("SELECT COUNT(*) FROM users");
+                $count = $stmt->fetchColumn();
+                $role = ($count == 0) ? 'admin' : 'user';
+
                 try {
-                    $stmt = $db->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)");
-                    $stmt->execute([$username, $hash]);
-                    header("Location: /login");
+                    $stmt = $db->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+                    $stmt->execute([$username, $hash, $role]);
+                    header("Location: /login?registered=1");
                     exit;
                 } catch (\PDOException $e) {
-                    $error = "Nutzername bereits vergeben.";
+                    $error = "Benutzername bereits vergeben";
                 }
+            } else {
+                $error = "Bitte alle Felder ausfüllen";
             }
         }
+        // Hier lag der Fehler: Pfad mit __DIR__ absichern
         include __DIR__ . '/../Views/auth/register.php';
     }
 
+    public function logout() {
+        session_start();
+        session_destroy();
+        header("Location: /login");
+        exit;
+    }
+
     public static function check() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
         if (!isset($_SESSION['user_id'])) {
             header("Location: /login");
             exit;
         }
-    }
-
-    public function logout() {
-        session_destroy();
-        header("Location: /login");
-        exit;
     }
 }
