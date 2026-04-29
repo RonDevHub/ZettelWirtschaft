@@ -16,7 +16,7 @@ class Database {
         $charset = 'utf8mb4';
 
         if (!$db || !$user || !$pass) {
-            die("Fehler: Datenbank-Variablen fehlen im Stack.");
+            die("Fehler: Datenbank-Konfiguration unvollständig. Prüfe DB_NAME, DB_USER und DB_PASSWORD im Stack.");
         }
 
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -29,14 +29,15 @@ class Database {
 
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
-            $this->initialize(); // Erstellt alle Tabellen automatisch
+            $this->initialize();[cite: 6]
         } catch (PDOException $e) {
-            die("Datenbankverbindung fehlgeschlagen: " . $e->getMessage());
+            // Debug-Hilfe: Zeigt an, mit welchem User/Host wir es versuchen
+            die("Verbindung fehlgeschlagen für User '$user' an Host '$host'. Fehler: " . $e->getMessage());
         }
     }
 
     private function initialize() {
-        // 1. Tabelle für Benutzer
+        // Tabellen-Schema automatisch erstellen[cite: 6]
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50) NOT NULL UNIQUE,
@@ -45,7 +46,6 @@ class Database {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB;");
 
-        // 2. Tabelle für Einkaufslisten
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS shopping_lists (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
@@ -54,7 +54,6 @@ class Database {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;");
 
-        // 3. Tabelle für Artikel auf der Liste
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             list_id INT NOT NULL,
