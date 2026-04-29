@@ -13,7 +13,7 @@ class Router {
         '/item/add' => ['App\Controller\ItemController', 'add'],
         '/item/toggle' => ['App\Controller\ItemController', 'toggle'],
         '/item/update-price' => ['App\Controller\ItemController', 'updatePrice'],
-        '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit'], // Hier fehlte das Komma!
+        '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit'],
         '/admin' => ['App\Controller\AdminController', 'index'],
         '/admin/category/add' => ['App\Controller\AdminController', 'addCategory'],
         '/admin/category/delete' => ['App\Controller\AdminController', 'deleteCategory'],
@@ -21,16 +21,29 @@ class Router {
 
     public function run() {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        
         if (isset($this->routes[$path])) {
             list($class, $method) = $this->routes[$path];
-            (new $class())->$method();
+            
+            if (class_exists($class)) {
+                $controller = new $class();
+                if (method_exists($controller, $method)) {
+                    $controller->$method();
+                } else {
+                    http_response_code(500);
+                    echo "500 - Methode $method im Controller $class nicht gefunden.";
+                }
+            } else {
+                http_response_code(500);
+                echo "500 - Controller-Klasse $class nicht gefunden.";
+            }
         } else {
             http_response_code(404);
             echo "404 - Seite nicht gefunden.";
         }
     }
 
-    // Falls die index.php die Methode 'dispatch' statt 'run' aufruft:
+    // Proxy-Methode für den Aufruf aus der index.php
     public function dispatch() {
         $this->run();
     }
