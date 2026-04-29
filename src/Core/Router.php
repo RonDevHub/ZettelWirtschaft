@@ -9,18 +9,18 @@ class Router {
         '/logout' => ['App\Controller\AuthController', 'logout'],
         '/dashboard' => ['App\Controller\ListController', 'index'],
         '/list/create' => ['App\Controller\ListController', 'create'],
-        '/list/view' => ['App\Controller\ListController', 'view'], // NEU
-        '/item/add' => ['App\Controller\ItemController', 'add'],    // NEU
-        '/item/toggle' => ['App\Controller\ItemController', 'toggle'] // NEU
+        '/list/view' => ['App\Controller\ListController', 'view'],
+        '/item/add' => ['App\Controller\ItemController', 'add'],
+        '/item/toggle' => ['App\Controller\ItemController', 'toggle'],
+        '/item/update-price' => ['App\Controller\ItemController', 'updatePrice'], // NEU
+        '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit']    // NEU
     ];
 
     public function run() {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        
         if (isset($this->routes[$path])) {
-            list($controllerName, $method) = $this->routes[$path];
-            $controller = new $controllerName();
-            $controller->$method();
+            list($class, $method) = $this->routes[$path];
+            (new $class())->$method();
         } else {
             http_response_code(404);
             echo "404 - Seite nicht gefunden.";
