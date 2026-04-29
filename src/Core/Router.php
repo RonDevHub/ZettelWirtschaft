@@ -14,6 +14,9 @@ class Router {
         '/item/toggle' => ['App\Controller\ItemController', 'toggle'],
         '/item/update-price' => ['App\Controller\ItemController', 'updatePrice'], // NEU
         '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit']    // NEU
+        '/admin' => ['App\Controller\AdminController', 'index'], // NEU
+        '/admin/category/add' => ['App\Controller\AdminController', 'addCategory'], // NEU
+        '/admin/category/delete' => ['App\Controller\AdminController', 'deleteCategory'], // NEU
     ];
 
     public function run() {
