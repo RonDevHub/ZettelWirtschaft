@@ -12,11 +12,11 @@ class Router {
         '/list/view' => ['App\Controller\ListController', 'view'],
         '/item/add' => ['App\Controller\ItemController', 'add'],
         '/item/toggle' => ['App\Controller\ItemController', 'toggle'],
-        '/item/update-price' => ['App\Controller\ItemController', 'updatePrice'], // NEU
-        '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit']    // NEU
-        '/admin' => ['App\Controller\AdminController', 'index'], // NEU
-        '/admin/category/add' => ['App\Controller\AdminController', 'addCategory'], // NEU
-        '/admin/category/delete' => ['App\Controller\AdminController', 'deleteCategory'], // NEU
+        '/item/update-price' => ['App\Controller\ItemController', 'updatePrice'],
+        '/item/add-deposit' => ['App\Controller\ItemController', 'addDeposit'], // Hier fehlte das Komma!
+        '/admin' => ['App\Controller\AdminController', 'index'],
+        '/admin/category/add' => ['App\Controller\AdminController', 'addCategory'],
+        '/admin/category/delete' => ['App\Controller\AdminController', 'deleteCategory'],
     ];
 
     public function run() {
@@ -28,5 +28,10 @@ class Router {
             http_response_code(404);
             echo "404 - Seite nicht gefunden.";
         }
+    }
+
+    // Falls die index.php die Methode 'dispatch' statt 'run' aufruft:
+    public function dispatch() {
+        $this->run();
     }
 }
