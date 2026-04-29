@@ -9,14 +9,18 @@ class Database {
     private $pdo;
 
     private function __construct() {
-        // Diese Werte kommen aus deinem Portainer-Stack (environment)
-        $host = 'db'; // Der Name des Services im Stack
-        $db   = 'zettelwirtschaft';
-        $user = 'ronny';
-        $pass = 'db_passwort_456';
+        // Wir ziehen die Variablen direkt aus der Umgebung
+        $host = getenv('DB_HOST') ?: 'db';
+        $db   = getenv('DB_NAME');
+        $user = getenv('DB_USER');
+        $pass = getenv('DB_PASSWORD');
         $charset = 'utf8mb4';
 
-        // WICHTIG: host=db erzwingt die Netzwerkverbindung über Docker
+        // Sicherheitscheck: Wenn Variablen fehlen, direkt abbrechen
+        if (!$db || !$user || !$pass) {
+            die("Datenbankkonfiguration unvollständig. Bitte DB_NAME, DB_USER und DB_PASSWORD setzen.");
+        }
+
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
         
         $options = [
@@ -28,8 +32,7 @@ class Database {
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
-            // Hier werfen wir den Fehler für das Debugging aus
-            die("Datenbankverbindung fehlgeschlagen: " . $e->getMessage());
+            die("Datenbankverbindung fehlgeschlagen. Bitte Stack-Variablen prüfen.");
         }
     }
 
@@ -44,7 +47,6 @@ class Database {
         return $this->pdo;
     }
 
-    // Proxy-Methoden für bequemen Zugriff
     public function prepare($sql) {
         return $this->pdo->prepare($sql);
     }
