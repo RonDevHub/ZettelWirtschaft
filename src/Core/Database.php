@@ -9,14 +9,16 @@ class Database {
     private $pdo;
 
     private function __construct() {
+        // Diese Werte werden zur Laufzeit aus den Stack-Variablen gezogen
         $host = getenv('DB_HOST') ?: 'db';
         $db   = getenv('DB_NAME');
         $user = getenv('DB_USER');
         $pass = getenv('DB_PASSWORD');
         $charset = 'utf8mb4';
 
+        // Sicherheits-Check
         if (!$db || !$user || !$pass) {
-            die("Datenbankkonfiguration unvollständig. Bitte DB_NAME, DB_USER und DB_PASSWORD im Stack setzen.");
+            die("Fehler: Datenbank-Variablen (DB_NAME, DB_USER, DB_PASSWORD) fehlen im Stack.");
         }
 
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -29,14 +31,14 @@ class Database {
 
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
-            // Nach erfolgreicher Verbindung Tabellen prüfen
-            $this->initialize();
+            $this->initialize(); // Erstellt Tabellen automatisch[cite: 6]
         } catch (PDOException $e) {
             die("Datenbankverbindung fehlgeschlagen: " . $e->getMessage());
         }
     }
 
     private function initialize() {
+        // Erstellt die User-Tabelle, falls sie noch nicht existiert[cite: 6]
         $sql = "CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50) NOT NULL UNIQUE,
@@ -45,7 +47,6 @@ class Database {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB;";
 
-        // Hier kannst du später weitere Tabellen wie 'shopping_lists' hinzufügen
         $this->pdo->exec($sql);
     }
 
@@ -54,10 +55,6 @@ class Database {
             self::$instance = new self();
         }
         return self::$instance;
-    }
-
-    public function getConnection() {
-        return $this->pdo;
     }
 
     public function prepare($sql) {
