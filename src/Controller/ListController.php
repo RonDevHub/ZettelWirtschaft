@@ -27,20 +27,14 @@ class ListController {
         }
     }
 
-    public function view() {
+public function view() {
         $id = (int)$_GET['id'];
         $db = Database::getInstance();
 
-        // Liste holen
         $stmt = $db->prepare("SELECT * FROM shopping_lists WHERE id = ?");
         $stmt->execute([$id]);
         $list = $stmt->fetch();
 
-        // Alle Kategorien für das Modal
-        $catStmt = $db->query("SELECT * FROM categories ORDER BY default_order ASC");
-        $allCategories = $catStmt->fetchAll();
-
-        // Items nach Kategorien gruppiert holen
         $itemStmt = $db->prepare("
             SELECT i.*, c.name as category_name 
             FROM list_items i 
@@ -52,10 +46,16 @@ class ListController {
         $items = $itemStmt->fetchAll();
 
         $categories = [];
+        $totalSum = 0;
         foreach ($items as $item) {
-            $categories[$item['category_id']]['name'] = $item['category_name'] ?? 'Unsortiert';
-            $categories[$item['category_id']]['items'][] = $item;
+            $catId = $item['category_id'] ?? 0;
+            $categories[$catId]['name'] = $item['category_name'] ?? 'Unsortiert';
+            $categories[$catId]['items'][] = $item;
+            $totalSum += $item['total_price'];
         }
+
+        $catStmt = $db->query("SELECT * FROM categories ORDER BY default_order ASC");
+        $allCategories = $catStmt->fetchAll();
 
         include __DIR__ . '/../Views/list/view.php';
     }
