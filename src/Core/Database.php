@@ -9,6 +9,7 @@ class Database {
     private $pdo;
 
     private function __construct() {
+        // Zieht die Daten aus dem Portainer-Stack
         $host = getenv('DB_HOST') ?: 'db';
         $db   = getenv('DB_NAME');
         $user = getenv('DB_USER');
@@ -29,15 +30,15 @@ class Database {
 
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
-            $this->initialize();[cite: 6]
+            // Sobald die Verbindung steht, bauen wir die Struktur auf
+            $this->initialize();
         } catch (PDOException $e) {
-            // Debug-Hilfe: Zeigt an, mit welchem User/Host wir es versuchen
             die("Verbindung fehlgeschlagen für User '$user' an Host '$host'. Fehler: " . $e->getMessage());
         }
     }
 
     private function initialize() {
-        // Tabellen-Schema automatisch erstellen[cite: 6]
+        // Tabellen-Schema automatisch erstellen, falls nicht vorhanden
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50) NOT NULL UNIQUE,
