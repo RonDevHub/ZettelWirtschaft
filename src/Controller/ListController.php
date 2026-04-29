@@ -2,61 +2,20 @@
 namespace App\Controller;
 
 use App\Core\Database;
+use App\Controller\AuthController;
 
 class ListController {
     public function __construct() {
+        // Hier wurde die undefinierte Methode gerufen
         AuthController::check();
     }
 
     public function index() {
         $db = Database::getInstance();
-        $stmt = $db->prepare("SELECT * FROM shopping_lists WHERE created_by = ?");
+        $stmt = $db->prepare("SELECT * FROM shopping_lists WHERE user_id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $lists = $stmt->fetchAll();
-        include __DIR__ . '/../Views/dashboard.php';
-    }
 
-    public function create() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name'] ?? 'Neue Liste');
-            $db = Database::getInstance();
-            $stmt = $db->prepare("INSERT INTO shopping_lists (name, created_by) VALUES (?, ?)");
-            $stmt->execute([$name, $_SESSION['user_id']]);
-            header("Location: /dashboard");
-            exit;
-        }
-    }
-
-public function view() {
-        $id = (int)$_GET['id'];
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("SELECT * FROM shopping_lists WHERE id = ?");
-        $stmt->execute([$id]);
-        $list = $stmt->fetch();
-
-        $itemStmt = $db->prepare("
-            SELECT i.*, c.name as category_name 
-            FROM list_items i 
-            LEFT JOIN categories c ON i.category_id = c.id 
-            WHERE i.list_id = ? 
-            ORDER BY c.default_order ASC, i.created_at DESC
-        ");
-        $itemStmt->execute([$id]);
-        $items = $itemStmt->fetchAll();
-
-        $categories = [];
-        $totalSum = 0;
-        foreach ($items as $item) {
-            $catId = $item['category_id'] ?? 0;
-            $categories[$catId]['name'] = $item['category_name'] ?? 'Unsortiert';
-            $categories[$catId]['items'][] = $item;
-            $totalSum += $item['total_price'];
-        }
-
-        $catStmt = $db->query("SELECT * FROM categories ORDER BY default_order ASC");
-        $allCategories = $catStmt->fetchAll();
-
-        include __DIR__ . '/../Views/list/view.php';
+        include __DIR__ . '/../Views/lists/index.php';
     }
 }
