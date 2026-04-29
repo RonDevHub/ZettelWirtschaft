@@ -1,5 +1,5 @@
 <?php
-// Fehleranzeige für Debug-Phase (In Prod später ausblenden)
+// Fehleranzeige für Debug-Phase
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -12,10 +12,6 @@ use App\Core\Router;
 // Router initialisieren
 $router = new Router();
 
-// Routen definieren (Beispielhaft)
-$router->add('GET', '/', ['App\Controller\AuthController', 'showLogin']);
-$router->add('POST', '/login', ['App\Controller\AuthController', 'login']);
-$router->add('GET', '/dashboard', ['App\Controller\ListController', 'index']);
-
 // Anfrage verarbeiten
+// Die Routen sind bereits in der Router-Klasse definiert
 $router->dispatch();
